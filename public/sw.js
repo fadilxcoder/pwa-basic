@@ -1,20 +1,15 @@
-const cacheName = 'static-x3fPWA-' + new Date().getTime(); ;
+const CACHE_NAME = 'static-x3fPWA';
 
 self.addEventListener('install', function (event) {
     console.log('SW Installed');
     event.waitUntil(
-        caches.open(cacheName) /* SW install code from here */
+        caches.open(CACHE_NAME) /* SW install code from here */
         .then(function (cache) {
         // cache.add('/');
         // cache.add('/index.html');
         // cache.add('/src/js/app.js');
             cache.addAll([
-                '/',                /* Caching contents */
-                '/index.html',
-                '/src/js/app.js',
-                '/src/css/app.css',
-                '/src/images/pwa.jpg',
-                'https://fonts.googleapis.com/css?family=Raleway:400,700'
+                '/'
             ]);
             console.log('caching in install..');
         })
@@ -28,7 +23,7 @@ self.addEventListener('activate', function (e) {
         .then(function (cacheList) {
             Promise.all(
                 cacheList.map(function (key) {
-                    if (key === cacheName) { 
+                    if (key === CACHE_NAME) { 
                         return;         /* clear out the old cache we don't need anymore */
                     }
                     caches.delete(key);
@@ -39,25 +34,65 @@ self.addEventListener('activate', function (e) {
 });
 
 self.addEventListener('fetch', function(event) {
+
+    if (!(event.request.url.indexOf('http') === 0)) return; // skip the request. if request is not made with http protocol
+
     console.log(`SW fetch from ${event.request.url}`);
+
     event.respondWith(
-        caches.match(event.request)
-        .then(function(res) {
-            if (res) {
-                /*
-                console.log('-----CACHE-------');
-                console.log(res);
-                console.log('-----------------');
-                */
-                return res;
-            } else {
-                /*
-                console.log('-----HTTP-------');
-                console.log(event.request);
-                console.log('-----------------');
-                */
-                return fetch(event.request);
-            }
-        })    
+        fromCache(event.request)
+    );
+
+    event.waitUntil(
+        update(event.request)
+        .then(refresh)
     );
 });
+
+
+/* Functions */
+
+function fromCache(request) {
+    return  caches.open(CACHE_NAME)
+            .then(function (cache) {
+                return cache.match(request, null);
+            })
+        ;
+}
+
+function update(request) {
+    return caches.open(CACHE_NAME)
+    .then(
+        function (cache) {
+            return fetch(request)
+                    .then(
+                        function (response) {
+                            // console.log(cache);
+                            return cache.put(
+                                request, 
+                                response.clone()
+                            )
+                            .then(function () {
+                                return response;
+                            });
+                        }
+                    );
+        }
+    );
+}
+
+function refresh(response) {
+    return self.clients.matchAll()
+    .then(
+        function (clients) {
+            clients.forEach(function (client) {
+                var message = {
+                    type: 'refresh',
+                    url: response.url,
+                    eTag: response.headers.get('ETag')
+                };
+                client.postMessage(JSON.stringify(message));
+            });
+        }
+    );
+}
