@@ -9,6 +9,7 @@
 - Use special cache, see `sw.js`
 - Close / Open tabs to activate service worker or unregister SW
 - Change port in `package.json`
+- **APP** : https://github.com/fadilxcoder/pwa-basic/tree/jqm-real-time (PWA APP RSS FEED)
 
 # Utils
 
