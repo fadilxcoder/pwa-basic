@@ -1,47 +1,105 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>An Example PWA</title>
-    <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
-    <link rel="stylesheet" href="/src/css/app.css">
-    <link rel="manifest" href="/manifest.json">
+    <title>JQuery Mobile - RSS</title>
+    <meta name="author" content="fadilxcoder" />
+    <meta name="copyright" content="fadilxcoder" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Titillium+Web" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="./assets/jquery.mobile-style.css">
+    <script src="./assets/jquery.mobile-1.12.4-jquery.min.js"></script>
+    <script src="./assets/jquery.mobile-1.4.5.min.js"></script>
 </head>
 
 <body>
-    <header class="main-header">
-        <h1>PWAs are great!</h1>
-        <h3>From offline support to native device features.</h3>
-    </header>
-    <article class="card" id="pwa">
-        <div class="card__image">
-            <img src="/src/images/pwa.jpg" alt="PWAs are great!">
+    <div data-role="page" id="home-page" data-theme="a">
+        <header data-role="header" role="banner">
+            <picture>
+                <img src="./assets/images/jquery-logo.png" alt="Logo JQM" />
+            </picture>
+            <h1>RSS FEED</h1>
+            <picture>
+                <img src="./assets/images/image.gif" alt="Banner Image" />
+            </picture>
+        </header>
+        <div data-role="content">
+            <ul data-role="listview" data-inset="true" id="ListContainer"></ul>
         </div>
-        <div class="card__content">
-            <p>PWAs are great, since you can build native-mobile-app-like experiences.</p>
-            <p>Core features are:</p>
-            <ul>
-                <li>Installable on <strong>Homescreen</strong></li>
-                <li><strong>Offline support</strong> with service workers</li>
-                <li>Usage of various <strong>caching strategies</strong></li>
-                <li>Web <strong>push notifications</strong></li>
-                <li><strong>Background sync</strong></li>
-                <li>Native device features like <strong>camera</strong></li>
-                <li>Way more...</li>
-            </ul>
+        <footer data-role="footer" data-position="fixed">
+            <div data-role="navbar">
+                <ul>
+                    <li><a href="#" data-rel="back" data-icon="ui-btn ui-icon-back"></a></li>
+                    <li><a href="index.html" data-transition="flow" data-ajax="false" data-icon="ui-btn ui-icon-home"></a></li>
+                    <li><a href="#" data-transition="flip" data-ajax="false" data-icon="ui-btn ui-icon-bullets"></a></li>
+                    <li><a href="#" data-transition="slideup" data-ajax="false" data-icon="ui-btn ui-icon-comment"></a></li>
+                </ul>
+            </div>
+        </footer>
+    </div>
+
+    <div data-role="page" id="popup">
+        <div data-role="header" data-theme="a">
+            <h1></h1>
         </div>
-        <div class="card__details">
-            <p>PWAs really are awesome. And you can turn any application into a PWA.</p>
-            <p>Or simply start using some of the features that make up a complete PWA. That process is called
-                "progressive enhancement" and what the "progressive" in "Progressive Web App" stands for.</p>
-            <p>Don't hesitate, dive into PWAs!</p>
+        <div role="main" class="ui-content">
+            <h2></h2>
+            <p></p>
         </div>
-    </article>
-    <script src="/src/js/app.js"></script>
+    </div>
+    <script type="text/javascript">
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+            .then(function() {
+                console.log('SW registered');
+            });
+        }
+
+        $(document).ready(function () {
+            $.ajax({
+                dataType: 'json',
+                url: 'http://127.0.0.1/pwa/public/rss.php',
+                cache: true,
+                type: 'GET',
+                success: function (data) {
+                    localStorage.setItem("rssData", JSON.stringify(data.items));
+                    showData(data.items);
+                    console.log('200 OK');
+                },
+                error: function (e) {
+                    var data = JSON.parse(localStorage.getItem("rssData"));
+                    showData(data);
+                    console.log(e.statusText + ':' + e.status);
+                },
+                fail: function () {
+                    console.log("Request Fail");
+                }
+            });
+            $(document).on('click', 'li.click-to-pop-up', function () {
+                var title = $(this).children('a').attr('data-title');
+                var description = $(this).children('a').attr('data-description-text').replace(
+                    'To read this article in full, please click here', '');
+                $('#popup div.ui-content h2').text(title);
+                $('#popup div.ui-content p').text(description);
+            });
+            // function Show Data
+            function showData(data) {
+                var table = '';
+                $.each(data, function (idx, obj) {
+                    table += (
+                        '<li class="click-to-pop-up"><a href="#popup" data-rel="dialog" data-transition="flip" data-description-text="' +
+                        obj.description_text + '" data-title="' + obj.title + '" >' + obj.title +
+                        '</a></li>');
+                });
+                $("#ListContainer").append(table);
+                $("#ListContainer li").addClass('ui-first-child ui-last-child');
+                $("#ListContainer li a").addClass('ui-btn ui-btn-icon-right ui-icon-carat-r');
+            }
+        });
+    </script>
 </body>
 
 </html>
