@@ -34,15 +34,11 @@ self.addEventListener('activate', function (e) {
 });
 
 self.addEventListener('fetch', function(event) {
-
     if (!(event.request.url.indexOf('http') === 0)) return; // skip the request. if request is not made with http protocol
-
     console.log(`SW fetch from ${event.request.url}`);
-
     event.respondWith(
         fromCache(event.request)
     );
-
     event.waitUntil(
         update(event.request)
         .then(refresh)
@@ -53,11 +49,13 @@ self.addEventListener('fetch', function(event) {
 /* Functions */
 
 function fromCache(request) {
-    return  caches.open(CACHE_NAME)
+    return fetch(request).catch(function() {
+        return caches.open(CACHE_NAME)
             .then(function (cache) {
-                return cache.match(request, null);
+                return cache.match(request);
             })
         ;
+    })
 }
 
 function update(request) {
