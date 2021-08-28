@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>JQuery Mobile - RSS</title>
+    <title>Feeder | JQM</title>
     <meta name="author" content="fadilxcoder" />
     <meta name="copyright" content="fadilxcoder" />
     <meta charset="utf-8">
@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="./assets/jquery.mobile-style.css">
     <script src="./assets/jquery.mobile-1.12.4-jquery.min.js"></script>
     <script src="./assets/jquery.mobile-1.4.5.min.js"></script>
+    <link rel="manifest" href="/manifest.json">
 </head>
 
 <body>
@@ -50,55 +51,61 @@
         </div>
     </div>
     <script type="text/javascript">
+
+        const APP_CONFIG = {
+            'URL' : 'http://127.0.0.1/pwa/public/rss.php',
+            'CACHE' : 'jqa-pwa'
+        };
         
+        // Registering SW
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
+            navigator.serviceWorker.register('/sw.js?vars=' + encodeURIComponent(JSON.stringify(APP_CONFIG)))
             .then(function() {
                 console.log('SW registered');
             });
         }
 
         $(document).ready(function () {
+            return;
             $.ajax({
                 dataType: 'json',
-                url: 'http://127.0.0.1/pwa/public/rss.php',
+                url: APP_CONFIG.URL,
                 cache: true,
                 type: 'GET',
                 success: function (data) {
-                    localStorage.setItem("rssData", JSON.stringify(data.items));
-                    showData(data.items);
+                    showData(data);
                     console.log('200 OK');
                 },
                 error: function (e) {
-                    var data = JSON.parse(localStorage.getItem("rssData"));
-                    showData(data);
                     console.log(e.statusText + ':' + e.status);
                 },
                 fail: function () {
                     console.log("Request Fail");
                 }
             });
-            $(document).on('click', 'li.click-to-pop-up', function () {
-                var title = $(this).children('a').attr('data-title');
-                var description = $(this).children('a').attr('data-description-text').replace(
-                    'To read this article in full, please click here', '');
-                $('#popup div.ui-content h2').text(title);
-                $('#popup div.ui-content p').text(description);
-            });
-            // function Show Data
-            function showData(data) {
-                var table = '';
-                $.each(data, function (idx, obj) {
-                    table += (
-                        '<li class="click-to-pop-up"><a href="#popup" data-rel="dialog" data-transition="flip" data-description-text="' +
-                        obj.description_text + '" data-title="' + obj.title + '" >' + obj.title +
-                        '</a></li>');
-                });
-                $("#ListContainer").append(table);
-                $("#ListContainer li").addClass('ui-first-child ui-last-child');
-                $("#ListContainer li a").addClass('ui-btn ui-btn-icon-right ui-icon-carat-r');
-            }
         });
+        
+        $(document).on('click', 'li.click-to-pop-up', function () {
+            var title = $(this).children('a').attr('data-title');
+            var description = $(this).children('a').attr('data-description-text').replace('To read this article in full, please click here', ''); // clean string !
+            $('#popup div.ui-content h2').text(title);
+            $('#popup div.ui-content p').text(description);
+        });
+
+        // function Show Data
+        function showData(data) {
+            var table = '';
+            $.each(data, function (idx, obj) {
+                table += (
+                    '<li class="click-to-pop-up"><a href="#popup" data-rel="dialog" data-transition="flip" data-description-text="' +
+                        obj.description + '" data-title="' + obj.title + '" >' + obj.title +
+                    '</a></li>'
+                );
+            });
+            $("#ListContainer").append(table);
+            $("#ListContainer li").addClass('ui-first-child ui-last-child');
+            $("#ListContainer li a").addClass('ui-btn ui-btn-icon-right ui-icon-carat-r');
+        }
     </script>
 </body>
 

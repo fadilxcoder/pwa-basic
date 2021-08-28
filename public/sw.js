@@ -1,4 +1,9 @@
-const CACHE_NAME = 'static-x3fPWA';
+const jsonVars = new URL(location).searchParams.get('vars');
+const APP_CONFIG = JSON.parse(jsonVars);
+
+// const CACHE_NAME = APP_CONFIG.CACHE;
+
+const CACHE_NAME = 'static';
 
 self.addEventListener('install', function (event) {
     console.log('SW Installed');

@@ -105,6 +105,22 @@ class QRss
         }
         $this->json_response($this->parse($xml));
     }
+
+    /**
+     * Outputs the array response
+     */
+    public function toarray()
+    {
+        if ( ! $xml = $this->fetch() ) {
+            $last_error = error_get_last();
+            $this->json_response( [
+                "{$this->error_msg_key}" =>  "Unable to connect to URL",
+                'error' => $last_error['message']],
+            500);
+        }
+        return $this->array_response($this->parse($xml));
+    }
+
     /**
      * Outputs the text response
      */
@@ -333,9 +349,18 @@ class QRss
      */
     private  function text_response($data, $status_code = 200) {
         $data = is_string($data) ? [$data] : $data;
-        http_response_code($status_code);
-        header('Content-Type: text/plain');
-        die($data);
+        return $data;
+    }
+
+    /**
+     * Return array
+     *
+     * @param $data
+     * @param int $status_code
+     */
+    private  function array_response($data, $status_code = 200) {
+        $data = is_string($data) ? [$data] : $data;
+        return $data;
     }
 }
 //(new Qrss('https://news.google.com/?output=rss'))->json();
@@ -344,5 +369,15 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE');
 header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization, X-Request-With');
 
-(new Qrss('https://www.networkworld.com/index.rss'))->json();
+$response = (new Qrss('https://www.networkworld.com/index.rss'))->toArray();
+
+$resp = [];
+foreach($response['items'] as $item) {
+    $resp[] = [
+        'title' => $item['title'],
+        'description' => $item['description_text'],
+    ];
+}
+shuffle($resp);
+echo json_encode($resp);
 ?>
